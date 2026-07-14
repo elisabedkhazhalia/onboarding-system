@@ -1,6 +1,5 @@
 package com.onboarding.system.models;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,4 +32,21 @@ public class User {
     private String role;
 
     private boolean isEnabled = true;
+
+    // 🚀 გადავიყვანეთ EAGER-ზე მყისიერი ჩატვირთვისთვის
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "mentor_id")
+    private User mentor;
+
+    // 🚀 ჭკვიანი მეთოდი ორმხრივი მენტორობის და საკუთარი თავის მენტორობის დასაბლოკად
+    public boolean canBeMentorFor(User student) {
+        if (this.id.equals(student.getId())) {
+            return false; // საკუთარი თავის მენტორი ვერ იქნება
+        }
+        // თუ მე (ამ კანდიდატს) უკვე მყავს მენტორად ეს სტუდენტი, მაშინ მე მისი მენტორი ვეღარ ვიქნები
+        if (this.mentor != null && this.mentor.getId().equals(student.getId())) {
+            return false;
+        }
+        return true;
+    }
 }

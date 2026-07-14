@@ -1,6 +1,5 @@
 package com.onboarding.system.services;
 
-
 import com.onboarding.system.models.User;
 import com.onboarding.system.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,15 +18,19 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // search employee by email
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("მომხმარებელი ვერ მოიძებნა"));
 
-        // spring security
+        // 🚀 როლს ვუმატებთ "ROLE_" პრეფიქსს Spring Security-სთვის
+        String role = user.getRole();
+        if (!role.startsWith("ROLE_")) {
+            role = "ROLE_" + role.toUpperCase();
+        }
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
-                .authorities(user.getRole())
+                .authorities(role)
                 .build();
     }
 }

@@ -5,39 +5,143 @@
     <title>HR Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-light">
 <div class="container mt-5">
-    <h2 class="mb-4">HR Dashboard - თანამშრომლები</h2>
+    <!-- იპოვე სათაურის ბლოკი და შეცვალე ასე: -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark mb-0">HR Dashboard - თანამშრომლები</h2>
+        <!-- 🚀 განახლებული უსაფრთხო გასვლის ღილაკი HR პანელისთვის -->
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn btn-danger rounded-pill px-4">🚪 სისტემიდან გასვლა</button>
+        </form>
+    </div>
 
-    <a href="/hr/users/add" class="btn btn-primary mb-3">ახალი თანამშრომლის დამატება</a>
+    <!-- ცხრილი 1: თანამშრომელთა სია და მენტორები -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                <tr>
+                    <th>#</th> <!-- აიდის ნაცვლად დავაწერეთ რიგითი ნომერი -->
+                    <th>სახელი</th>
+                    <th>გვარი</th>
+                    <th>ელ-ფოსტა</th>
+                    <th>როლი</th>
+                    <th>მენტორი 🤝</th>
+                    <th>სტატუსი</th>
+                    <th>მოქმედება</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- 🚀 შემოვიტანეთ iterStat რიგითი ნომრებისთვის -->
+                <tr th:each="user, iterStat : ${employees}">
+                    <!-- 🚀 ახლა აქ ყოველთვის სწორი თანმიმდევრობა გამოჩნდება (1, 2, 3...) -->
+                    <td th:text="${iterStat.count}">1</td>
+                    <td th:text="${user.firstName}">სახელი</td>
+                    <td th:text="${user.lastName}">გვარი</td>
+                    <td th:text="${user.email}">ფოსტა</td>
+                    <td th:text="${user.role}">როლი</td>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>სახელი</th>
-            <th>გვარი</th>
-            <th>ელ-ფოსტა</th>
-            <th>როლი</th>
-            <th>სტატუსი</th>
-            <th>მოქმედება</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="user : ${users}">
-            <td th:text="${user.id}">1</td>
-            <td th:text="${user.firstName}">სახელი</td>
-            <td th:text="${user.lastName}">გვარი</td>
-            <td th:text="${user.email}">ფოსტა</td>
-            <td th:text="${user.role}">როლი</td>
-            <td th:text="${user.isEnabled ? 'აქტიური' : 'გათიშული'}">აქტიური</td>
-            <td>
-                <a href="#" class="btn btn-sm btn-warning">რედაქტირება</a>
-                <a href="#" class="btn btn-sm btn-danger">წაშლა</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+                    <!-- მენტორის არჩევა -->
+                    <td>
+                        <form th:action="@{/hr/users/{id}/assign-mentor(id=${user.id})}" method="post" class="d-flex gap-1 align-items-center">
+                            <select name="mentorId" class="form-select form-select-sm" required style="max-width: 160px;">
+                                <option value="" disabled th:selected="${user.mentor == null}">აირჩიე მენტორი</option>
+
+                                <!-- 🚀 შესაძლებლობა მენტორის მოხსნის (თუ უკვე ყავს მიბმული) -->
+                                <option value="0" th:if="${user.mentor != null}">❌ მენტორის მოხსნა</option>
+
+                                <!-- 🚀 ჩვენი ახალი უსაფრთხო Java-ფილტრი -->
+                                <option th:each="possibleMentor : ${allUsers}"
+                                        th:if="${possibleMentor.canBeMentorFor(user)}"
+                                        th:value="${possibleMentor.id}"
+                                        th:text="${possibleMentor.firstName + ' ' + possibleMentor.lastName}"
+                                        th:selected="${user.mentor != null && user.mentor.id == possibleMentor.id}">
+                                    სახელი გვარი
+                                </option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">მიბმა</button>
+                        </form>
+                    </td>
+
+                    <td th:text="${user.isEnabled ? 'აქტიური' : 'გათიშული'}">აქტიური</td>
+                    <td>
+                        <a th:href="@{/hr/users/edit/{id}(id=${user.id})}" class="btn btn-sm btn-warning rounded-pill px-3">რედაქტირება</a>
+                        <a th:href="@{/hr/users/{id}/delete(id=${user.id})}" class="btn btn-sm btn-danger rounded-pill px-3"
+                           onclick="return confirm('ნამდვილად გსურთ ამ მომხმარებლის და მისი ყველა მონაცემის სრულად წაშლა?');">
+                            წაშლა
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ცხრილი 2: განწყობის მონიტორინგი (აქ სათაურები გასწორდა!) -->
+    <div class="card shadow-sm border-0 rounded-4 mt-5 mb-5">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h4 class="fw-bold text-dark">📊 ახალი წევრების განწყობის მონიტორინგი</h4>
+            <p class="text-muted small mb-0">აქ ჩანს თანამშრომლების ყოველდღიური ემოციური სტატუსი და საჭიროების შემთხვევაში განგაშის სიგნალები.</p>
+        </div>
+        <div class="card-body px-4 pb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>თანამშრომელი</th>
+                        <th>თარიღი</th>
+                        <th>განწყობა</th>
+                        <th>კომენტარი</th>
+                        <th>HR სტატუსი / მოქმედება</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fb : ${feedbacks}">
+                        <td>
+                            <strong th:text="${fb.employee.firstName + ' ' + fb.employee.lastName}">ტესტ იუზერი</strong>
+                            <div class="text-muted small" th:text="${fb.employee.email}">eli@gmail.com</div>
+                        </td>
+                        <td th:text="${fb.submissionDate}">2026-07-14</td>
+                        <td>
+                            <span th:switch="${fb.moodScore}">
+                                <span th:case="1" class="fs-4" title="ძალიან ცუდი">😠</span>
+                                <span th:case="2" class="fs-4" title="ცუდი">🙁</span>
+                                <span th:case="3" class="fs-4" title="ნეიტრალური">😐</span>
+                                <span th:case="4" class="fs-4" title="კარგი">🙂</span>
+                                <span th:case="5" class="fs-4" title="შესანიშნავი">🤩</span>
+                            </span>
+                            <strong class="ms-1" th:text="${fb.moodScore} + '/5'">5/5</strong>
+                        </td>
+                        <td>
+                            <span th:text="${fb.comment != null && !fb.comment.isEmpty() ? fb.comment : '—'}"
+                                  th:classappend="${fb.comment != null && !fb.comment.isEmpty() ? 'fst-italic text-dark' : 'text-muted'}">
+                                კომენტარის ტექსტი
+                            </span>
+                        </td>
+                        <td>
+                            <span th:if="${fb.moodScore <= 2}" class="badge bg-danger-subtle text-danger border border-danger p-2 rounded-pill">
+                                ⚠️ უჭირს ინტეგრაცია / საჭიროებს საუბარს!
+                            </span>
+                            <span th:if="${fb.moodScore == 3}" class="badge bg-warning-subtle text-warning border border-warning p-2 rounded-pill">
+                                👀 დაკვირვების ქვეშ
+                            </span>
+                            <span th:if="${fb.moodScore >= 4}" class="badge bg-success-subtle text-success border border-success p-2 rounded-pill">
+                                ✅ ყველაფერი რიგზეა
+                            </span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(feedbacks)}">
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            აქტივობა ჯერ არ დაფიქსირებულა.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

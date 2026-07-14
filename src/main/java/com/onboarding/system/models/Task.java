@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
 @Entity
 @Table(name = "tasks")
 @Data
@@ -18,19 +16,14 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String title;
-
+    private String title; // დავალების სახელი (მაგ. "გაეცანი შინაგანაწესს")
     private String description;
 
-    // Status: PENDING, IN_PROGRESS, DONE
-    @Column(nullable = false)
-    private String status = "PENDING";
+    private boolean isCompleted; // შესრულებულია თუ არა
 
-    private LocalDate dueDate;
+    private int xp; // რამდენი ქულა ენიჭება ამ დავალების შესრულებას
 
-    // access with  User class (who is this task )
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User assignee;
+    private User user; // რომელ თანამშრომელს ეკუთვნის დავალება
 }

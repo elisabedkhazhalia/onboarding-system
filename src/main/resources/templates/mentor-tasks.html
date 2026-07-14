@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>მისიების მართვა</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5" style="max-width: 900px;">
+
+  <!-- 🚀 ზედა სათაურის ბლოკი გასვლის ღილაკით -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <a href="/mentor/dashboard" class="btn btn-outline-secondary rounded-circle me-3" title="უკან დაბრუნება">←</a>
+      <div>
+        <h3 class="fw-bold mb-1" th:text="${mentee.firstName + ' ' + mentee.lastName + ' - მისიები'}">სახელი - მისიები</h3>
+        <p class="text-muted mb-0">მიმდინარე პროგრესი: <strong class="text-success" th:text="${progress} + '%'">0%</strong></p>
+      </div>
+    </div>
+    <!-- 🚀 სისტემიდან გასვლის ღილაკი მენტორისთვის -->
+    <form th:action="@{/logout}" method="post" style="display: inline;">
+      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" style="border: 1px solid #dc3545;">
+        🚪 სისტემიდან გასვლა
+      </button>
+    </form>
+  </div>
+
+  <div class="row">
+    <!-- მარცხენა მხარე: დავალებების სია -->
+    <div class="col-md-7">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">📋 აქტიური მისიები</h5>
+          <div class="list-group list-group-flush">
+            <div th:each="task : ${tasks}" class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom">
+              <div>
+                <h6 class="fw-bold mb-1" th:classappend="${task.completed} ? 'text-decoration-line-through text-muted' : ''" th:text="${task.title}">დავალება</h6>
+                <p class="text-muted small mb-0" th:text="${task.description}">აღწერა</p>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1 rounded-pill small">+<span th:text="${task.xp}">20</span> XP</span>
+                <!-- წაშლა -->
+                <a th:href="@{/mentor/tasks/{taskId}/delete(taskId=${task.id}, menteeId=${mentee.id})}" class="btn btn-sm btn-outline-danger">წაშლა</a>
+              </div>
+            </div>
+            <div th:if="${#lists.isEmpty(tasks)}" class="text-center py-4 text-muted">
+              ამჟამად დავალებები არ არის გაწერილი.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- მარჯვენა მხარე: ახალი მისიის დამატების ფორმა -->
+    <div class="col-md-5">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">➕ ახალი მისიის გაწერა</h5>
+          <form th:action="@{'/mentor/mentees/' + ${mentee.id} + '/tasks/add'}" th:object="${newTask}" method="post">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">მისიის სათაური</label>
+              <input type="text" th:field="*{title}" class="form-control" placeholder="მაგ. React-ის საბაზისო კურსი" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">აღწერა</label>
+              <textarea th:field="*{description}" class="form-control" rows="3" placeholder="რა უნდა გააკეთოს კონკრეტულად..." required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">XP ჯილდო</label>
+              <select th:field="*{xp}" class="form-select">
+                <option value="20">+20 XP (მარტივი)</option>
+                <option value="50">+50 XP (საშუალო)</option>
+                <option value="100">+100 XP (რთული / პროექტი)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2">მისიის გაშვება 🚀</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

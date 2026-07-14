@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -24,8 +25,12 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/hr/dashboard", true)
                         .permitAll()
                 )
+                // SecurityConfig-ში logout სექცია უნდა იყოს ასეთი:
                 .logout(logout -> logout
+                        .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 );
         return http.build();

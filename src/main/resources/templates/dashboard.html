@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ჩემი დაფა - Onboarding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        .badge-box-locked {
+            background-color: #f8fafc !important;
+            border: 1px dashed #cbd5e1 !important;
+            opacity: 0.65;
+        }
+        .badge-icon-locked {
+            filter: grayscale(100%);
+            opacity: 0.5;
+        }
+        .badge-box-unlocked {
+            background-color: #ffffff !important;
+            border: 1px solid #34d399 !important;
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.12);
+        }
+        .badge-icon-unlocked {
+            filter: grayscale(0%);
+            animation: pulse 2.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container mt-4" style="max-width: 1100px;">
+
+    <!-- 1. ჰედერი -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+            <div>
+                <h2 class="fw-bold mb-1">გამარჯობა, <span th:text="${user.firstName}">სახელი</span>! 🚀</h2>
+                <!-- შეცვალეთ ეს ბლოკი: -->
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <span class="badge bg-primary px-3 py-2 rounded-pill">Level <span th:text="${level}">1</span></span>
+
+                </div>
+            </div>
+
+            <!-- მენტორის ბარათი (თუ მენტორი ყავს) -->
+            <div th:if="${user.mentor != null}" class="d-flex align-items-center bg-white p-3 rounded-4 border shadow-sm" style="min-width: 280px;">
+                <img th:src="'https://ui-avatars.com/api/?name=' + ${user.mentor.firstName} + '+' + ${user.mentor.lastName} + '&background=6f42c1&color=fff'"
+                     class="rounded-circle me-3" width="50" height="50">
+                <div>
+                    <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.65rem; color: #6f42c1 !important;">შენი მენტორი 🤝</small>
+                    <strong class="text-dark" th:text="${user.mentor.firstName + ' ' + user.mentor.lastName}">მენტორი</strong>
+                    <div class="text-muted small" style="font-size: 0.8rem;" th:text="${user.mentor.email}">email</div>
+                </div>
+            </div>
+
+            <!-- მენტორის ბარათი (თუ მენტორი ჯერ არ ყავს მიბმული) -->
+            <div th:unless="${user.mentor != null}" class="d-flex align-items-center p-3 rounded-4 border" style="min-width: 280px; background-color: #f1f5f9; border-style: dashed !important;">
+                <div class="text-center w-100 py-1">
+                    <span class="fs-4 d-block mb-1">⏳</span>
+                    <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.65rem;">მენტორი ჯერ არ არის მიბმული</small>
+                    <span class="text-muted" style="font-size: 0.75rem;">HR მალე დაგაკავშირებთ კოლეგასთან</span>
+                </div>
+            </div>
+
+            <!-- XP და Logout -->
+            <div class="text-center d-flex flex-column gap-2">
+                <div class="badge bg-warning text-dark fs-5 p-3 rounded-pill shadow-sm" style="min-width: 120px;">
+                    ⭐ <span th:text="${xp}">0</span> XP
+                </div>
+                <!-- 🚀 POST ფორმა უსაფრთხო გასვლისთვის (აღარასდროს ამოაგდებს 404-ს) -->
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill w-100">🚪 სისტემიდან გასვლა</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. პროგრეს ბარი -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold mb-0">🎯 ადაპტაციის საერთო პროგრესი</h5>
+                <span class="fw-bold text-success fs-5"><span id="progressText" th:text="${progress}">0</span>%</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 20px;">
+                <div id="mainProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                     role="progressbar" th:style="'width: ' + ${progress} + '%'" th:aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- სხეული -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- დავალებები -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">📋 ჩემი მისიები დღეისთვის</h5>
+                    <div class="list-group list-group-flush">
+                        <div th:each="task : ${tasks}" class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom">
+                            <div>
+                                <h6 class="fw-bold mb-1" th:classappend="${task.completed} ? 'text-decoration-line-through text-muted' : ''" th:text="${task.title}">დავალება</h6>
+                                <p class="text-muted small mb-0" th:text="${task.description}">აღწერა</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1 rounded-pill small">
+                                    +<span th:text="${task.xp}">20</span> XP   <!-- 👈 აქ დაამატეთ "task." -->
+                                </span>
+
+                                <form th:action="@{/tasks/complete/{id}(id=${task.id})}" method="post">
+                                    <input type="checkbox" class="form-check-input h5 mb-0" th:checked="${task.completed}" onchange="this.form.submit()">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ფიდბექი -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-2">How is your mood today? 🧠</h5>
+                    <form th:action="@{/feedback/submit}" method="post" id="moodForm" onsubmit="return validateMoodForm()">
+                        <input type="hidden" id="selectedMood" name="moodScore" required>
+                        <div class="d-flex justify-content-between gap-2 my-3">
+                            <button type="button" onclick="selectMood(1, this)" class="btn btn-outline-light border btn-lg fs-3 mood-btn" title="ძალიან ცუდი">😠</button>
+                            <button type="button" onclick="selectMood(2, this)" class="btn btn-outline-light border btn-lg fs-3 mood-btn" title="ცუდი">🙁</button>
+                            <button type="button" onclick="selectMood(3, this)" class="btn btn-outline-light border btn-lg fs-3 mood-btn" title="ნეიტრალური">😐</button>
+                            <button type="button" onclick="selectMood(4, this)" class="btn btn-outline-light border btn-lg fs-3 mood-btn" title="კარგი">🙂</button>
+                            <button type="button" onclick="selectMood(5, this)" class="btn btn-outline-light border btn-lg fs-3 mood-btn" title="შესანიშნავი">🤩</button>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" name="comment" class="form-control" placeholder="დაწერე მოკლედ, რაიმე ხომ არ გაწუხებს?">
+                            <button class="btn btn-primary" type="submit">გაგზავნა</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- მიღწევები -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">🎖️ ჩემი მიღწევები</h5>
+
+                    <div class="d-flex align-items-center mb-4 p-3 rounded-4" th:classappend="${xp >= 20} ? 'badge-box-unlocked' : 'badge-box-locked'">
+                        <div class="fs-1 me-3" th:classappend="${xp >= 20} ? 'badge-icon-unlocked' : 'badge-icon-locked'">💻</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">Tech Guru</h6>
+                            <small class="d-block text-muted" style="font-size: 0.75rem;">მიიღე სამუშაო კომპიუტერი</small>
+                            <span th:if="${xp >= 20}" class="badge bg-success-subtle text-success rounded-pill mt-1" style="font-size: 0.65rem;">✅ გახსნილია</span>
+                            <span th:unless="${xp >= 20}" class="badge bg-secondary-subtle text-secondary rounded-pill mt-1" style="font-size: 0.65rem;">🔒 საჭიროებს 20 XP</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4 p-3 rounded-4" th:classappend="${xp >= 50} ? 'badge-box-unlocked' : 'badge-box-locked'">
+                        <div class="fs-1 me-3" th:classappend="${xp >= 50} ? 'badge-icon-unlocked' : 'badge-icon-locked'">🤝</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">Icebreaker</h6>
+                            <small class="d-block text-muted" style="font-size: 0.75rem;">გაეცანი გუნდის წევრებს</small>
+                            <span th:if="${xp >= 50}" class="badge bg-success-subtle text-success rounded-pill mt-1" style="font-size: 0.65rem;">✅ გახსნილია</span>
+                            <span th:unless="${xp >= 50}" class="badge bg-secondary-subtle text-secondary rounded-pill mt-1" style="font-size: 0.65rem;">🔒 საჭიროებს 50 XP</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4 p-3 rounded-4" th:classappend="${xp >= 100} ? 'badge-box-unlocked' : 'badge-box-locked'">
+                        <div class="fs-1 me-3" th:classappend="${xp >= 100} ? 'badge-icon-unlocked' : 'badge-icon-locked'">🚀</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">First Deploy</h6>
+                            <small class="d-block text-muted" style="font-size: 0.75rem;">შეასრულე პირველი დავალება</small>
+                            <span th:if="${xp >= 100}" class="badge bg-success-subtle text-success rounded-pill mt-1" style="font-size: 0.65rem;">✅ გახსნილია</span>
+                            <span th:unless="${xp >= 100}" class="badge bg-secondary-subtle text-secondary rounded-pill mt-1" style="font-size: 0.65rem;">🔒 საჭიროებს 100 XP</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center p-3 rounded-4" th:classappend="${progress == 100} ? 'badge-box-unlocked bg-success-subtle' : 'badge-box-locked'">
+                        <div class="fs-1 me-3" th:classappend="${progress == 100} ? 'badge-icon-unlocked' : 'badge-icon-locked'">🏆</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">Super Onboardee</h6>
+                            <small class="d-block text-muted" style="font-size: 0.75rem;">100% ადაპტაცია სრულად</small>
+                            <span th:if="${progress == 100}" class="badge bg-success text-white rounded-pill mt-1" style="font-size: 0.65rem;">👑 ჩემპიონი!</span>
+                            <span th:unless="${progress == 100}" class="badge bg-secondary-subtle text-secondary rounded-pill mt-1" style="font-size: 0.65rem;">🔒 საჭიროებს 100% პროგრესს</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const progress = parseInt(document.getElementById("progressText").innerText);
+        if (progress === 100) {
+            const duration = 3 * 1000;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+            }());
+        }
+    });
+
+    function selectMood(score, element) {
+        document.getElementById('selectedMood').value = score;
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.classList.remove('btn-primary', 'text-white');
+            btn.classList.add('btn-outline-light');
+        });
+        element.classList.remove('btn-outline-light');
+        element.classList.add('btn-primary', 'text-white');
+    }
+
+    function validateMoodForm() {
+        const score = document.getElementById('selectedMood').value;
+        if (!score) {
+            alert("გთხოვთ, ჯერ აირჩიოთ განწყობის შესაბამისი ემოჯი!");
+            return false;
+        }
+        return true;
+    }
+</script>
+</body>
+</html>
